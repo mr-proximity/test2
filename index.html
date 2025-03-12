@@ -1,0 +1,118 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>3D Logo Scroll</title>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/three.js/r128/three.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/three@0.128/examples/js/loaders/GLTFLoader.js"></script>
+    <style>
+        * { margin: 0; padding: 0; box-sizing: border-box; }
+        body { overflow-x: hidden; }
+
+        /* Page 1 - Light Gray Background (#dddddd) */
+        .page1 {
+            background: #dddddd;
+            height: 100vh;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            position: relative;
+        }
+
+        /* 3D Canvas for the logo */
+        .canvas-container {
+            position: absolute;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+        }
+
+        /* Page 2 - Dark Gray Background (#232323) */
+        .page2 {
+            height: 100vh;
+            background: #232323;
+        }
+    </style>
+</head>
+<body>
+
+    <div class="page1">
+        <div class="canvas-container" id="canvas-container"></div>
+    </div>
+
+    <div class="page2"></div>
+
+    <script>
+        let scene, camera, renderer, logo, spotlight;
+
+        function init() {
+            scene = new THREE.Scene();
+
+            // Camera - Centered properly
+            camera = new THREE.PerspectiveCamera(50, window.innerWidth / window.innerHeight, 0.1, 100);
+            camera.position.set(0, 0, 5); // Centered on model
+
+            // Renderer
+            renderer = new THREE.WebGLRenderer({ antialias: true, alpha: true });
+            renderer.setSize(window.innerWidth, window.innerHeight);
+            document.getElementById("canvas-container").appendChild(renderer.domElement);
+
+            // Lighting
+            spotlight = new THREE.SpotLight(0xffffff, 2);
+            spotlight.position.set(2, 5, 3);
+            spotlight.angle = Math.PI / 6;
+            spotlight.castShadow = true;
+            scene.add(spotlight);
+
+            // Load 3D Model
+            const loader = new THREE.GLTFLoader();
+            loader.load(
+                "logo-popine.glb",  
+                function (gltf) {
+                    console.log("✅ Model loaded successfully!");
+                    logo = gltf.scene;
+                    logo.scale.set(2, 2, 2); // Ensure model is visible
+
+                    // Adjust position to be truly centered
+                    logo.position.set(0, 0, 0); // Perfectly centered
+                    scene.add(logo);
+                },
+                function (xhr) {
+                    console.log(`Loading: ${(xhr.loaded / xhr.total) * 100}%`);
+                },
+                function (error) {
+                    console.error("❌ Error loading 3D model:", error);
+                }
+            );
+
+            document.addEventListener("mousemove", onMouseMove);
+            window.addEventListener("resize", onWindowResize);
+            animate();
+        }
+
+        function onMouseMove(event) {
+            if (!logo) return;
+            let x = (event.clientX / window.innerWidth - 0.5) * 2;
+            let y = (event.clientY / window.innerHeight - 0.5) * 2;
+            logo.rotation.y = x * Math.PI * 0.5;
+            logo.rotation.x = y * Math.PI * 0.2;
+        }
+
+        function onWindowResize() {
+            camera.aspect = window.innerWidth / window.innerHeight;
+            camera.updateProjectionMatrix();
+            renderer.setSize(window.innerWidth, window.innerHeight);
+        }
+
+        function animate() {
+            requestAnimationFrame(animate);
+            renderer.render(scene, camera);
+        }
+
+        init();
+    </script>
+
+</body>
+</html>
